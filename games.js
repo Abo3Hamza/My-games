@@ -10,6 +10,56 @@ const games = [
     html: "tasbih.html"
   },
 {
+    name: "chess",
+    image: "chess.jpg",
+    html: "chess.html"
+  },
+{
+    name: "Gomoku",
+    image: "Gomoku.jpg",
+    html: "Gomoku.html"
+  },
+{
+    name: "خمن الرقم",
+    image: "Guess.jpg",
+    html: "Guess.html"
+  },
+{
+    name: "سبحه الكترونيه",
+    image: "tasbih.jpg",
+    html: "tasbih.html"
+  },
+{
+    name: "simple calculator",
+    image: "S-Calc.jpg",
+    html: "S-Calc.html"
+  },
+{
+    name: "advanced calculator",
+    image: "M-Calc.jpg",
+    html: "M-Calc.html"
+  },
+{
+    name: "first project",
+    image: "My-xo.jpg",
+    html: "My-xo.html"
+  },
+{
+    name: "tic tac toc",
+    image: "xo.jpg",
+    html: "xo.html"
+  },
+{
+    name: "Snake game",
+    image: "snake.jpg",
+    html: "snake.html"
+  },
+{
+    name: "Wall Chess",
+    image: "wall.jpg",
+    html: "wall.html"
+  },
+{
   name: "حجره ورقه مقص",
   image: "fps.jpg",
   html: "fps.html"

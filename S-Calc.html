@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق اله حاسبه</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* استخدم هذه الألوان لتحقيق توافق جيد مع إعدادات مُظلم أو فاتح للشاشة */
+        :root {
+            --background-color: #000000;
+            --text-color: #ffffff;
+            --button-color: #4CAF50;
+            --button-hover-color: #3e8e41;
+        }
+
+        /* استخدم هذه القاعدة لتحديث الألوان بناءً على إعدادات النظام */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #000000;
+                --text-color: #ffffff;
+                --button-color: #4CAF50;
+                --button-hover-color: #3e8e41;
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --background-color: #000000;
+                --text-color: #333333;
+                --button-color: #4CAF50;
+                --button-hover-color: #3e8e41;
+            }
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: Arial, sans-serif;
+        }
+
+        .button {
+            background-color: var(--button-color);
+            color: var(--text-color);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: var(--button-hover-color);
+        }
+
+        #result {
+            color: #ffffff;
+        }
+
+        .input-field {
+            margin-bottom: 20px;
+        }
+
+        .input-field label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-field select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .math-functions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .math-functions button {
+            margin: 10px;
+        }
+
+        .screen {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 24px;
+            text-align: right;
+        }
+
+        .keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .keyboard button {
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 1px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .keyboard button:hover {
+            background-color: #ccc;
+        }
+
+        #math-result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #trigonometric-functions {
+            display: none; /* الأساسي */
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 0;
+            white-space: nowrap;
+            scrollbar-width: thin;
+            scrollbar-color: var(--button-color) var(--background-color);
+        }
+
+        #trigonometric-functions::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #trigonometric-functions::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        #trigonometric-functions::-webkit-scrollbar-thumb {
+            background-color: var(--button-color);
+            border-radius: 20px;
+        }
+
+        #trigonometric-functions button {
+            flex: 0 0 auto;
+            min-width: 120px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode {
+            background-color: #000000;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24 dark-mode">
+    <div class="screen" id="screen">0</div>
+    <div class="keyboard">
+        <div class="row flex flex-row-reverse">
+            <button class="button" onclick="clearScreen()">C</button>
+            <button class="button" onclick="backspace()">DEL</button>
+            <button class="button" onclick="appendOperator('%')">%</button>
+            <button class="button" onclick="appendOperator('/')">/</button>
+        </div>
+        <div class="row flex flex-row-reverse">
+            <button class="button" onclick="appendNumber(7)">7</button>
+            <button class="button" onclick="appendNumber(8)">8</button>
+            <button class="button" onclick="appendNumber(9)">9</button>
+            <button class="button" onclick="appendOperator('*')">*</button>
+        </div>
+        <div class="row flex flex-row-reverse">
+            <button class="button" onclick="appendNumber(4)">4</button>
+            <button class="button" onclick="appendNumber(5)">5</button>
+            <button class="button" onclick="appendNumber(6)">6</button>
+            <button class="button" onclick="appendOperator('-')">-</button>
+        </div>
+        <div class="row flex flex-row-reverse">
+            <button class="button" onclick="appendNumber(1)">1</button>
+            <button class="button" onclick="appendNumber(2)">2</button>
+            <button class="button" onclick="appendNumber(3)">3</button>
+            <button class="button" onclick="appendOperator('+')">+</button>
+        </div>
+        <div class="row flex flex-row-reverse">
+            <button class="button" onclick="appendNumber(0)">0</button>
+            <button class="button" onclick="appendOperator('.')" >.</button>
+            <button class="button" onclick="calculate()">=</button>
+            <button class="button" onclick="power()">^</button>
+        </div>
+        <div class="row flex flex-row-reverse">
+            <button class="button" id="parenthesis-button" onclick="appendParenthesis()">()</button>
+            <button class="button" onclick="solveRoot()">√</button>
+            <button class="button" onclick="solveFactorial()">!</button>
+            <button class="button" onclick="openTrigonometricFunctions()"> <+> </button>
+        </div>
+    </div>
+    <div id="trigonometric-functions" style="display: none;">
+        <button class="button" onclick="solveSinDeg()">sin(درجة)</button>
+        <button class="button" onclick="solveCosDeg()">cos(درجة)</button>
+        <button class="button" onclick="solveTanDeg()">tan(درجة)</button>
+        <button class="button" onclick="solveAbs()">|x|</button>
+        <button class="button" onclick="solveLog()">log</button>
+        <button class="button" onclick="solveLn()">ln</button>
+        <button class="button" onclick="solveSinInverse()">sin^-1</button>
+        <button class="button" onclick="solveCosInverse()">cos^-1</button>
+        <button class="button" onclick="solveTanInverse()">tan^-1</button>
+        <button class="button" onclick="solveExp()">e^x</button>
+        <button class="button" onclick="solvePi()">π</button>
+    </div>
+</div>
+
+<script>
+    let screen = document.getElementById("screen");
+    let base = null;
+    let exponent = null;
+    let trigonometricFunctions = document.getElementById("trigonometric-functions");
+    let parenthesisButton = document.getElementById("parenthesis-button");
+    let parenthesisOpen = false;
+
+    function clearScreen() {
+        screen.innerText = "0";
+        base = null;
+        exponent = null;
+        parenthesisOpen = false;
+        parenthesisButton.innerText = "()";
+    }
+
+    function backspace() {
+        let currentScreen = screen.innerText;
+        if (currentScreen.length > 1) {
+            screen.innerText = currentScreen.slice(0, -1);
+        } else {
+            screen.innerText = "0";
+        }
+    }
+
+    function appendNumber(number) {
+        let currentScreen = screen.innerText;
+        if (currentScreen === "0") {
+            screen.innerText = number.toString();
+        } else {
+            screen.innerText += number.toString();
+        }
+    }
+
+    function appendOperator(operator) {
+        let currentScreen = screen.innerText;
+        if (currentScreen !== "0") {
+            screen.innerText += operator;
+        }
+    }
+
+    function power() {
+        let currentScreen = screen.innerText;
+        if (currentScreen !== "0" && !isNaN(currentScreen)) {
+            base = parseFloat(currentScreen);
+            screen.innerText = currentScreen + "^";
+        }
+    }
+
+    function calculate() {
+        if (screen.innerText.includes("^")) {
+            let parts = screen.innerText.split("^");
+            base = parseFloat(parts[0]);
+            exponent = parseFloat(parts[1]);
+            let result = Math.pow(base, exponent);
+            screen.innerText = `الناتج: ${result}`;
+        } else {
+            let currentScreen = screen.innerText;
+            try {
+                let result = eval(currentScreen);
+                screen.innerText = `الناتج: ${result}`;
+            } catch (error) {
+                screen.innerText = "خطأ";
+            }
+        }
+    }
+
+    function appendParenthesis() {
+        let currentScreen = screen.innerText;
+        if (!parenthesisOpen) {
+            screen.innerText += "(";
+            parenthesisOpen = true;
+            parenthesisButton.innerText = ")";
+        } else {
+            screen.innerText += ")";
+            parenthesisOpen = false;
+            parenthesisButton.innerText = "()";
+        }
+    }
+
+    function solveRoot() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.sqrt(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveFactorial() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = factorial(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function factorial(n) {
+        if (n === 0 || n === 1) {
+            return 1;
+        } else {
+            return n * factorial(n - 1);
+        }
+    }
+
+    function openTrigonometricFunctions() {
+        const trigFunc = document.getElementById("trigonometric-functions");
+        if (trigFunc.style.display === "none" || !trigFunc.style.display) {
+            trigFunc.style.display = "flex";
+            trigFunc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            trigFunc.style.display = "none";
+        }
+    }
+
+    function solveSinDeg() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.sin(parseFloat(currentScreen) * Math.PI / 180);
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveCosDeg() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.cos(parseFloat(currentScreen) * Math.PI / 180);
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveTanDeg() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.tan(parseFloat(currentScreen) * Math.PI / 180);
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveAbs() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.abs(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveLog() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.log10(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveLn() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.log(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveSinInverse() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.asin(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result * 180 / Math.PI} درجة`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveCosInverse() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.acos(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result * 180 / Math.PI} درجة`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveTanInverse() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.atan(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result * 180 / Math.PI} درجة`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solveExp() {
+        let currentScreen = screen.innerText;
+        try {
+            let result = Math.exp(parseFloat(currentScreen));
+            screen.innerText = `الناتج: ${result}`;
+        } catch (error) {
+            screen.innerText = "خطأ";
+        }
+    }
+
+    function solvePi() {
+        screen.innerText = `الناتج: ${Math.PI}`;
+    }
+
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            calculate();
+        }
+    });
+</script>
+</body>
+</html>

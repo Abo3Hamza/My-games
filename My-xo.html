@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>لعبة X,O - Ahmed.AGpro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: ltr;
+            text-align: center;
+            background-color: rgb(171, 167, 179);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .cell {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #45d1b7;
+            font-size: 40px;
+            cursor: pointer;
+            background-color: #f6efef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .player-input {
+            margin: 20px 0;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Welcome to X,O Game</h2>
+    <p>Created by: Ahmed Ramadan Abd Elrady (Ahmed.AGpro)</p>
+
+    <div class="player-input">
+        <input type="text" id="player1" placeholder="Player 1 Name (X)">
+        <input type="text" id="player2" placeholder="Player 2 Name (O)">
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="game" style="display: none;">
+        <div id="status"></div>
+        <div class="board" id="board"></div>
+        <button onclick="restartGame()">Restart Game</button>
+    </div>
+</div>
+
+<script>
+    let currentPlayer = 'X';
+    let gameBoard = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+    let gameActive = false;
+    let playerNames = { X: '', O: '' };
+
+    function startGame() {
+        playerNames.X = document.getElementById('player1').value || 'Player 1';
+        playerNames.O = document.getElementById('player2').value || 'Player 2';
+        document.getElementById('game').style.display = 'block';
+        gameActive = true;
+        updateBoard();
+        updateStatus();
+    }
+
+    function createBoard() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+
+        gameBoard.forEach((value, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = value;
+            cell.onclick = () => handleCellClick(index);
+            board.appendChild(cell);
+        });
+    }
+
+    function handleCellClick(index) {
+        if (!gameActive || ['X', 'O'].includes(gameBoard[index])) return;
+
+        gameBoard[index] = currentPlayer;
+        updateBoard();
+
+        if (checkWin()) {
+            gameActive = false;
+            document.getElementById('status').textContent = `${currentPlayer === 'X' ? playerNames.X : playerNames.O} Wins!`;
+            highlightWinningCombination();
+            return;
+        }
+
+        if (checkDraw()) {
+            gameActive = false;
+            document.getElementById('status').textContent = "It's a Draw!";
+            return;
+        }
+
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        updateStatus();
+    }
+
+    function checkWin() {
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        return winPatterns.some(pattern =>
+            pattern.every(index => gameBoard[index] === currentPlayer)
+        );
+    }
+
+    function checkDraw() {
+        return gameBoard.every(cell => ['X', 'O'].includes(cell));
+    }
+
+    function updateBoard() {
+        const cells = document.getElementsByClassName('cell');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].textContent = gameBoard[i];
+        }
+    }
+
+    function updateStatus() {
+        document.getElementById('status').textContent =
+            `${currentPlayer === 'X' ? playerNames.X : playerNames.O}'s Turn (${currentPlayer})`;
+    }
+
+    function highlightWinningCombination() {
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        winPatterns.forEach(pattern => {
+            if (pattern.every(index => gameBoard[index] === currentPlayer)) {
+                pattern.forEach(index => {
+                    document.getElementsByClassName('cell')[index].style.backgroundColor = '#90EE90';
+                });
+            }
+        });
+    }
+
+    function restartGame() {
+        gameBoard = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+        currentPlayer = 'X';
+        gameActive = true;
+        createBoard();
+        updateStatus();
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.backgroundColor = '#fff';
+        });
+    }
+
+    // Initialize game
+    createBoard();
+</script>
+</body>
+</html>

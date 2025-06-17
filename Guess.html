@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة تخمين الرقم</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-900 to-indigo-900 text-white min-h-screen flex items-center justify-center">
+<div class="max-w-md w-full space-y-6">
+    <h1 class="text-4xl font-bold text-center text-yellow-300">لعبة تخمين الرقم!</h1>
+
+    <div class="bg-gray-800 bg-opacity-75 p-8 rounded-lg shadow-2xl">
+        <p class="text-lg mb-6 text-gray-200">أهلا بك! أنا أفكر في رقم بين 1 و 100. حاول تخمينه.</p>
+
+        <div class="space-y-6">
+            <input type="number" id="guessInput"
+                   class="w-full bg-gray-700 bg-opacity-50 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400"
+                   placeholder="أدخل رقمك هنا" min="1" max="100">
+
+            <button onclick="checkGuess()"
+                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                تخمين
+            </button>
+
+            <div id="feedback" class="text-center text-lg font-semibold"></div>
+
+            <div class="text-sm text-gray-400 text-center">
+                عدد المحاولات: <span id="attempts" class="font-bold">0</span>
+            </div>
+
+            <button onclick="restartGame()"
+                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                إعادة اللعبة
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let targetNumber;
+    let attempts = 0;
+
+    function initializeGame() {
+        targetNumber = Math.floor(Math.random() * 100) + 1;
+        attempts = 0;
+        document.getElementById('attempts').textContent = attempts;
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('guessInput').value = '';
+        document.getElementById('guessInput').disabled = false;
+    }
+
+    function checkGuess() {
+        const userGuess = parseInt(document.getElementById('guessInput').value);
+        const feedbackElement = document.getElementById('feedback');
+
+        if (isNaN(userGuess)) {
+            feedbackElement.textContent = "الرجاء إدخال رقم صحيح!";
+            feedbackElement.className = "text-center text-red-400";
+            return;
+        }
+
+        if (userGuess < 1 || userGuess > 100) {
+            feedbackElement.textContent = "الرجاء إدخال رقم بين 1 و 100!";
+            feedbackElement.className = "text-center text-red-400";
+            return;
+        }
+
+        attempts++;
+        document.getElementById('attempts').textContent = attempts;
+
+        if (userGuess === targetNumber) {
+            feedbackElement.textContent = "🎉 تهانينا! لقد فزت! 🎉";
+            feedbackElement.className = "text-center text-green-400";
+            document.getElementById('guessInput').disabled = true;
+        } else if (userGuess < targetNumber) {
+            feedbackElement.textContent = "🔺 الرقم الصحيح أعلى من ذلك!";
+            feedbackElement.className = "text-center text-yellow-400";
+        } else {
+            feedbackElement.textContent = "🔻 الرقم الصحيح أقل من ذلك!";
+            feedbackElement.className = "text-center text-yellow-400";
+        }
+    }
+
+    function restartGame() {
+        initializeGame();
+    }
+
+    // Initialize the game when the page loads
+    initializeGame();
+</script>
+</body>
+</html>

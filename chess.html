@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>لعبة Wall Chess</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #fd9348;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        #turn-indicator {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #chessboard {
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 600px;
+            max-height: 600px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 2px solid #333;
+        }
+        .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            background-color: #95a5a6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .fullscreen-btn {
+            left: 15px;
+        }
+        .square {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5vmin;
+            cursor: pointer;
+        }
+        .light {
+            background-color: #f0d9b5;
+        }
+        .dark {
+            background-color: #b58863;
+        }
+        .selected {
+            outline: 3px solid red;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+        button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #resetModal {
+            transition: opacity 0.3s ease;
+        }
+        #resetModal button:hover {
+            opacity: 0.9;
+        }
+        @media (max-width: 480px) {
+            #turn-indicator {
+                font-size: 18px;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body dir="rtl">
+<div id="game-container">
+    <div id="resetModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1002; justify-content: center; align-items: center;">
+        <div style="font-family: Arial, sans-serif; font-size: 18px; color: #333; background-color: #f8d7a1; padding: 15px; border: 2px solid #d35400; border-radius: 10px; text-align: center; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+            هل أنت متأكد أنك تريد إعادة اللعبة؟ سيتم فقدان التقدم الحالي.
+            <div style="margin-top: 20px;">
+                <button onclick="resetGameFromModal(true)" style="margin: 0 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #d35400; color: #fff; border: none; border-radius: 5px;">تأكيد</button>
+                <button onclick="resetGameFromModal(false)" style="margin: 0 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #95a5a6; color: #fff; border: none; border-radius: 5px;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+    <button class="fullscreen-btn" onclick="toggleFullScreen()">⛶</button>
+    <div id="turn-indicator">دور اللاعب الأبيض</div>
+    <div id="chessboard"></div>
+    <div id="buttons">
+        <button onclick="undoMove()">العودة للخلف</button>
+        <button onclick="confirmResetGame()">إعادة اللعبة</button>
+    </div>
+</div>
+
+<script>
+    const boardElement = document.getElementById('chessboard');
+    const turnIndicator = document.getElementById('turn-indicator');
+
+    const pieces = {
+        'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+        'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+    };
+
+    const initialBoard = [
+        ['r','n','b','q','k','b','n','r'],
+        ['p','p','p','p','p','p','p','p'],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['P','P','P','P','P','P','P','P'],
+        ['R','N','B','Q','K','B','N','R']
+    ];
+
+    let board = JSON.parse(JSON.stringify(initialBoard));
+    let moveHistory = [];
+    let selected = null;
+    let currentPlayer = 'white';
+
+    function saveGameState() {
+        const gameState = {
+            board: board,
+            moveHistory: moveHistory,
+            currentPlayer: currentPlayer,
+            selected: selected,
+            turnIndicatorText: turnIndicator.textContent
+        };
+        localStorage.setItem('chessGameState', JSON.stringify(gameState));
+    }
+
+    function loadGameState() {
+        const savedState = localStorage.getItem('chessGameState');
+        if (savedState) {
+            const gameState = JSON.parse(savedState);
+            board = gameState.board;
+            moveHistory = gameState.moveHistory || [];
+            currentPlayer = gameState.currentPlayer || 'white';
+            selected = gameState.selected;
+            turnIndicator.textContent = gameState.turnIndicatorText || 'دور اللاعب الأبيض';
+        } else {
+            board = JSON.parse(JSON.stringify(initialBoard));
+            moveHistory = [];
+            currentPlayer = 'white';
+            selected = null;
+            turnIndicator.textContent = 'دور اللاعب الأبيض';
+        }
+    }
+
+    function renderBoard() {
+        boardElement.innerHTML = '';
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const square = document.createElement('div');
+                square.classList.add('square');
+                square.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
+                square.dataset.row = row;
+                square.dataset.col = col;
+
+                if (selected && selected.row == row && selected.col == col) {
+                    square.classList.add('selected');
+                }
+
+                const piece = board[row][col];
+                if (piece) {
+                    square.textContent = pieces[piece];
+                }
+
+                square.addEventListener('click', () => handleSquareClick(row, col));
+                boardElement.appendChild(square);
+            }
+        }
+    }
+
+    function handleSquareClick(row, col) {
+        const piece = board[row][col];
+        const isWhitePiece = piece && piece === piece.toUpperCase();
+        const isBlackPiece = piece && piece === piece.toLowerCase();
+
+        if (!selected) {
+            if ((currentPlayer === 'white' && isWhitePiece) || (currentPlayer === 'black' && isBlackPiece)) {
+                selected = { row, col };
+            }
+        } else {
+            const movingPiece = board[selected.row][selected.col];
+            if ((currentPlayer === 'white' && isBlackPiece) || (currentPlayer === 'black' && isWhitePiece)) {
+                saveMove();
+                movePiece(selected.row, selected.col, row, col);
+                selected = null;
+                switchTurn();
+            } else if ((currentPlayer === 'white' && !isWhitePiece) || (currentPlayer === 'black' && !isBlackPiece)) {
+                saveMove();
+                movePiece(selected.row, selected.col, row, col);
+                selected = null;
+                switchTurn();
+            } else if (row === selected.row && col === selected.col) {
+                selected = null;
+            } else {
+                selected = { row, col };
+            }
+        }
+        renderBoard();
+        saveGameState();
+    }
+
+    function movePiece(fromRow, fromCol, toRow, toCol) {
+        board[toRow][toCol] = board[fromRow][fromCol];
+        board[fromRow][fromCol] = '';
+    }
+
+    function switchTurn() {
+        currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+        turnIndicator.textContent = `دور اللاعب ${currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
+    }
+
+    function saveMove() {
+        moveHistory.push({
+            board: JSON.parse(JSON.stringify(board)),
+            currentPlayer: currentPlayer,
+            selected: selected ? { ...selected } : null,
+            turnIndicatorText: turnIndicator.textContent
+        });
+        saveGameState();
+    }
+
+    function undoMove() {
+        if (moveHistory.length > 0) {
+            const lastState = moveHistory.pop();
+            board = lastState.board;
+            currentPlayer = lastState.currentPlayer;
+            selected = lastState.selected;
+            turnIndicator.textContent = lastState.turnIndicatorText;
+            renderBoard();
+            saveGameState();
+        }
+    }
+
+    function confirmResetGame() {
+        document.getElementById('resetModal').style.display = 'flex';
+    }
+
+    function resetGameFromModal(confirm) {
+        const modal = document.getElementById('resetModal');
+        modal.style.display = 'none';
+        if (confirm) {
+            resetGame();
+        }
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    function resetGame() {
+        board = JSON.parse(JSON.stringify(initialBoard));
+        moveHistory = [];
+        selected = null;
+        currentPlayer = 'white';
+        turnIndicator.textContent = 'دور اللاعب الأبيض';
+        renderBoard();
+        saveGameState();
+    }
+
+    // Fullscreen support on load
+    function requestFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    }
+
+    window.onload = () => {
+        loadGameState();
+        renderBoard();
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+            requestFullscreen();
+        }
+    };
+</script>
+</body>
+</html>

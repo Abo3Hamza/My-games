@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>لعبة Wall Chess</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #fd9348;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        #turn-indicator {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #white-walls,
+        #black-walls {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .wall-icon {
+            width: 55px;
+            height: 15px;
+            background-color: #2F4F4F;
+            border-radius: 2px;
+            cursor: grab;
+            position: relative;
+        }
+
+        #chessboard {
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 600px;
+            max-height: 600px;
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            border: 2px solid #3C2F2F;
+            position: relative;
+            background-color: #A0522D;
+        }
+
+        .square {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5vmin;
+            cursor: pointer;
+            border: 2px solid #efb468;
+            background-color: #8b4513;
+        }
+
+        .square:nth-child(odd) {
+            background-color: #8B4513;
+        }
+
+        .square.border-row {
+            background-color: #95a5a6;
+        }
+
+        .selected {
+            outline: 4px solid red;
+        }
+
+        .highlight {
+            outline: 4px solid #00FF00;
+        }
+
+        .wall-horizontal,
+        .wall-vertical {
+            position: absolute;
+            background-color: #7bf1f1;
+            pointer-events: none;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            background-color: #95a5a6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .fullscreen-btn {
+            left: 15px;
+        }
+
+
+        .wall-horizontal {
+            height: 4px;
+            width: calc(100% / 9 * 2);
+        }
+
+        .wall-vertical {
+            width: 4px;
+            height: calc(100% / 11 * 2);
+        }
+
+        .wall-slot {
+            position: absolute;
+            background-color: transparent;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .wall-slot-horizontal {
+            height: 10px;
+            width: calc(100% / 9 * 2);
+        }
+
+        .wall-slot-vertical {
+            width: 10px;
+            height: calc(100% / 11 * 2);
+        }
+
+        .wall-preview {
+            position: absolute;
+            background-color: rgb(99, 237, 205);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .wall-preview-horizontal {
+            height: 4px;
+            width: calc(100% / 9 * 2);
+        }
+
+        .wall-preview-vertical {
+            width: 4px;
+            height: calc(100% / 11 * 2);
+        }
+
+        #buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            margin: 0 10px 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #95a5a6;
+            color: #fff;
+        }
+
+        button:hover {
+            background-color: #7f8c8d;
+        }
+
+        #resetModal,
+        #winModal,
+        #instructionsModal,
+        #aiSettingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            color: #333;
+            background-color: #f8d7a1;
+            padding: 20px;
+            border: 2px solid #d35400;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            margin: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons button {
+            margin: 5px 10px;
+        }
+
+        #resetModal button:hover,
+        #winModal button:hover,
+        #instructionsModal button:hover,
+        #aiSettingsModal button:hover {
+            opacity: 0.9;
+        }
+
+        .difficulty-btn {
+            background-color: #95a5a6;
+        }
+
+        .difficulty-btn.active {
+            background-color: #d35400;
+        }
+
+        @media (max-width: 480px) {
+            #turn-indicator {
+                font-size: 16px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .wall-icon {
+                width: 20px;
+                height: 8px;
+            }
+        }
+    </style>
+</head>
+<body dir="rtl">
+<div id="game-container">
+    <div id="resetModal">
+        <div class="modal-content">
+            هل أنت متأكد أنك تريد إعادة اللعبة؟ سيتم فقدان التقدم الحالي.
+            <div class="modal-buttons">
+                <button onclick="resetGameFromModal(true)">تأكيد</button>
+                <button onclick="resetGameFromModal(false)">إلغاء</button>
+            </div>
+        </div>
+    </div>
+    <div id="winModal">
+        <div class="modal-content">
+            <span id="winMessage"></span>
+            <div class="modal-buttons">
+                <button onclick="winGameFromModal(true)">لعبة جديدة</button>
+                <button onclick="winGameFromModal(false)">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    <div id="instructionsModal">
+        <div class="modal-content">
+            <h2>مرحباً بك في لعبة Wall Chess!</h2>
+            <div style="text-align: right; margin-top: 15px;">
+                <h3>قواعد اللعبة:</h3>
+                <p>1. يتحرك كل لاعب بالتناوب، ويمكن التحرك خطوة واحدة في أي اتجاه (أفقي أو رأسي).</p>
+                <p>2. يمكن القفز فوق قطعة الخصم إذا كانت في المربع المجاور.</p>
+                <p>3. يمكن وضع الحوائط لمنع تقدم الخصم، لكن لا يمكن وضعها بشكل متداخل.</p>
+                <p>4. لكل لاعب 8 حوائط يمكن استخدامها.</p>
+                <p>5. الفائز هو من يصل أولاً إلى الجانب المقابل من اللوحة.</p>
+
+                <h3>التحكم:</h3>
+                <p>- انقر على قطعتك لتحديدها، ثم انقر على مربع مضاء للتحرك إليه.</p>
+                <p>- اسحب الحائط من منطقة الحوائط وأفلته على اللوحة لوضعه.</p>
+                <p>- استخدم زر التراجع للعودة خطوة للوراء.</p>
+                <p>- يمكنك تشغيل/إيقاف الصوت باستخدام زر الصوت.</p>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeInstructionsModal()">فهمت!</button>
+            </div>
+        </div>
+    </div>
+    <div id="aiSettingsModal">
+        <div class="modal-content">
+            <h2>إعدادات اللعب ضد الكمبيوتر</h2>
+            <div style="margin: 15px 0;">
+                <h3>اختر مستوى الصعوبة:</h3>
+                <div class="modal-buttons">
+                    <button id="easyBtn" class="difficulty-btn active" onclick="setDifficulty('easy')">سهل</button>
+                    <button id="mediumBtn" class="difficulty-btn" onclick="setDifficulty('medium')">متوسط</button>
+                    <button id="hardBtn" class="difficulty-btn" onclick="setDifficulty('hard')">صعب</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="startAIGame()">ابدأ اللعب</button>
+                <button onclick="closeAISettingsModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+    <button class="fullscreen-btn" onclick="toggleFullScreen()">⛶</button>
+    <div id="turn-indicator">دور اللاعب الأبيض</div>
+    <div id="white-walls"></div>
+    <div id="chessboard"></div>
+    <div id="black-walls"></div>
+    <div id="buttons">
+        <button onclick="undoMove()">التراجع</button>
+        <button onclick="confirmResetGame()">إعادة اللعبة</button>
+        <button onclick="showInstructions()">التعليمات</button>
+        <button onclick="showAISettings()">اللعب ضد الكمبيوتر</button>
+    </div>
+</div>
+
+<script>
+    const boardElement = document.getElementById('chessboard');
+    const turnIndicator = document.getElementById('turn-indicator');
+    const whiteWallsElement = document.getElementById('white-walls');
+    const blackWallsElement = document.getElementById('black-walls');
+    const winModal = document.getElementById('winModal');
+    const winMessage = document.getElementById('winMessage');
+    const instructionsModal = document.getElementById('instructionsModal');
+    const aiSettingsModal = document.getElementById('aiSettingsModal');
+
+    // Sound elements
+    const moveSound = new Audio('/home/ubuntu/sounds/move.mp3');
+    const wallSound = new Audio('/home/ubuntu/sounds/wall.mp3');
+    const winSound = new Audio('/home/ubuntu/sounds/win.mp3');
+    let soundEnabled = true;
+
+    // AI settings
+    let playingAgainstAI = false;
+    let aiDifficulty = 'easy'; // 'easy', 'medium', 'hard'
+
+    const initialState = {
+        board: Array(11).fill().map(() => Array(9).fill('')), // Rows -1 to 9
+        whitePos: null,
+        blackPos: null,
+        walls: [],
+        whiteWalls: 8,
+        blackWalls: 8,
+        whitePlaced: false,
+        blackPlaced: false,
+        currentPlayer: 'white',
+        moveHistory: [],
+        selected: null
+    };
+    let gameState = JSON.parse(JSON.stringify(initialState));
+
+    // Cache DOM elements to reduce queries
+    let squares = [];
+    let wallSlots = [];
+    let wallElements = [];
+
+    // Maximum number of moves and walls
+    const MAX_HISTORY_LENGTH = 20;
+    const MAX_WALLS = 100;
+
+    // Show instructions on first load
+    window.onload = () => {
+        initializeBoard();
+        renderBoard();
+        showInstructions();
+    };
+
+    function showInstructions() {
+        instructionsModal.style.display = 'flex';
+    }
+
+    function closeInstructionsModal() {
+        instructionsModal.style.display = 'none';
+    }
+
+    function showAISettings() {
+        aiSettingsModal.style.display = 'flex';
+    }
+
+    function closeAISettingsModal() {
+        aiSettingsModal.style.display = 'none';
+    }
+
+    function setDifficulty(difficulty) {
+        aiDifficulty = difficulty;
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(difficulty + 'Btn').classList.add('active');
+    }
+
+    function startAIGame() {
+        resetGame();
+        playingAgainstAI = true;
+        closeAISettingsModal();
+    }
+
+    function createWallIcon(player) {
+        const wallIcon = document.createElement('div');
+        wallIcon.classList.add('wall-icon');
+        wallIcon.draggable = gameState.currentPlayer === player;
+        wallIcon.addEventListener('dragstart', (e) => {
+            if (gameState.currentPlayer === player) {
+                e.dataTransfer.setData('text/plain', 'wall');
+            }
+        });
+        return wallIcon;
+    }
+
+    function renderWallsIndicators() {
+        const whiteFragment = document.createDocumentFragment();
+        const blackFragment = document.createDocumentFragment();
+        for (let i = 0; i < gameState.whiteWalls; i++) {
+            whiteFragment.appendChild(createWallIcon('white'));
+        }
+        for (let i = 0; i < gameState.blackWalls; i++) {
+            blackFragment.appendChild(createWallIcon('black'));
+        }
+        whiteWallsElement.innerHTML = '';
+        blackWallsElement.innerHTML = '';
+        whiteWallsElement.appendChild(whiteFragment);
+        blackWallsElement.appendChild(blackFragment);
+    }
+
+    function initializeBoard() {
+        const fragment = document.createDocumentFragment();
+        squares = [];
+        wallSlots = [];
+        wallElements = [];
+
+        // Create squares for rows -1 to 9
+        for (let row = -1; row <= 9; row++) {
+            const rowSquares = [];
+            for (let col = 0; col < 9; col++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                if (row === -1 || row === 9) {
+                    square.classList.add('border-row');
+                }
+                square.dataset.row = row;
+                square.dataset.col = col;
+                square.addEventListener('click', () => handleSquareClick(row, col));
+                rowSquares.push(square);
+                fragment.appendChild(square);
+            }
+            squares.push(rowSquares);
+        }
+
+        // Create horizontal wall slots
+        for (let row = -1; row <= 9; row++) {
+            for (let col = 0; col < 8; col++) {
+                const hSlot = document.createElement('div');
+                hSlot.className = 'wall-slot wall-slot-horizontal';
+                hSlot.style.left = `${col * 100 / 9}%`;
+                hSlot.style.top = `${((row + 1) * 100 / 11) - 0.5}%`;
+                hSlot.dataset.row = row;
+                hSlot.dataset.col = col;
+                hSlot.dataset.type = 'horizontal';
+                hSlot.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    showWallPreview(row, col, 'horizontal');
+                });
+                hSlot.addEventListener('dragleave', removeWallPreview);
+                hSlot.addEventListener('drop', (e) => {
+                    handleWallDrop(e, row, col, 'horizontal');
+                    removeWallPreview();
+                });
+                wallSlots.push(hSlot);
+                fragment.appendChild(hSlot);
+            }
+        }
+
+        // Create vertical wall slots
+        for (let row = -1; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                const vSlot = document.createElement('div');
+                vSlot.className = 'wall-slot wall-slot-vertical';
+                vSlot.style.left = `${col * 100 / 9}%`;
+                vSlot.style.top = `${row * 100 / 11}%`;
+                vSlot.dataset.row = row;
+                vSlot.dataset.col = col;
+                vSlot.dataset.type = 'vertical';
+                vSlot.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    showWallPreview(row, col, 'vertical');
+                });
+                vSlot.addEventListener('dragleave', removeWallPreview);
+                vSlot.addEventListener('drop', (e) => {
+                    handleWallDrop(e, row, col, 'vertical');
+                    removeWallPreview();
+                });
+                wallSlots.push(vSlot);
+                fragment.appendChild(vSlot);
+            }
+        }
+
+        boardElement.innerHTML = '';
+        boardElement.appendChild(fragment);
+    }
+
+    function renderBoard() {
+        for (let row = -1; row <= 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                const square = squares[row + 1][col];
+                square.classList.remove('selected', 'highlight');
+                if (gameState.selected && gameState.selected.row == row && gameState.selected.col == col) {
+                    square.classList.add('selected');
+                }
+                const piece = gameState.board[row + 1][col];
+                square.textContent = piece === 'W' ? '⚪' : piece === 'B' ? '⚫' : '';
+            }
+        }
+
+        wallElements.forEach(wall => wall.remove());
+        wallElements = [];
+        const fragment = document.createDocumentFragment();
+        gameState.walls.forEach(wall => {
+            const wallElement = document.createElement('div');
+            wallElement.className = wall.type === 'horizontal' ? 'wall-horizontal' : 'wall-vertical';
+            wallElement.style.left = wall.type === 'horizontal' ? `${wall.col * 100 / 9}%` : `${wall.col * 100 / 9}%`;
+            wallElement.style.top = wall.type === 'horizontal' ? `${((wall.row + 1) * 100 / 11) - 0.5}%` : `${wall.row * 100 / 11}%`;
+            wallElements.push(wallElement);
+            fragment.appendChild(wallElement);
+        });
+        boardElement.appendChild(fragment);
+
+        updateIndicators();
+        renderWallsIndicators();
+
+        if (gameState.selected) {
+            highlightValidMoves(gameState.selected.row, gameState.selected.col);
+        }
+    }
+
+    function highlightValidMoves(fromRow, fromCol) {
+        const directions = [
+            { row: -1, col: 0 }, // Up
+            { row: 1, col: 0 },  // Down
+            { row: 0, col: -1 }, // Left
+            { row: 0, col: 1 }   // Right
+        ];
+
+        // Clear previous highlights
+        for (let row = -1; row <= 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                squares[row + 1][col].classList.remove('highlight');
+            }
+        }
+
+        directions.forEach(dir => {
+            // Single-step move
+            const toRow = fromRow + dir.row;
+            const toCol = fromCol + dir.col;
+            if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+                squares[toRow + 1][toCol].classList.add('highlight');
+            }
+
+            // Jump move (two steps)
+            const jumpRow = fromRow + dir.row * 2;
+            const jumpCol = fromCol + dir.col * 2;
+            if (isValidMove(fromRow, fromCol, jumpRow, jumpCol)) {
+                squares[jumpRow + 1][jumpCol].classList.add('highlight');
+            }
+        });
+    }
+
+    function showWallPreview(row, col, type) {
+        removeWallPreview();
+
+        if (type === 'horizontal') {
+            const preview = document.createElement('div');
+            preview.className = 'wall-preview wall-preview-horizontal';
+            preview.style.left = `${col * 100 / 9}%`;
+            preview.style.top = `${((row + 1) * 100 / 11) - 0.5}%`;
+            preview.dataset.type = 'horizontal';
+            boardElement.appendChild(preview);
+        } else {
+            const preview = document.createElement('div');
+            preview.className = 'wall-preview wall-preview-vertical';
+            preview.style.left = `${col * 100 / 9}%`;
+            preview.style.top = `${row * 100 / 11}%`;
+            preview.dataset.type = 'vertical';
+            boardElement.appendChild(preview);
+        }
+    }
+
+    function removeWallPreview() {
+        const previews = boardElement.querySelectorAll('.wall-preview');
+        previews.forEach(preview => preview.remove());
+    }
+
+    function handleSquareClick(row, col) {
+        const piece = gameState.board[row + 1][col];
+        const isWhiteTurn = gameState.currentPlayer === 'white';
+        const isBlackTurn = gameState.currentPlayer === 'black';
+
+        // If AI's turn, do nothing
+        if (playingAgainstAI && isBlackTurn) {
+            return;
+        }
+
+        if (!gameState.selected) {
+            if ((isWhiteTurn && piece === 'W') || (isBlackTurn && piece === 'B')) {
+                gameState.selected = { row, col };
+                renderBoard();
+            } else if (!gameState.whitePlaced && isWhiteTurn && row === 0 && !piece) {
+                // Place white piece
+                gameState.board[row + 1][col] = 'W';
+                gameState.whitePos = { row, col };
+                gameState.whitePlaced = true;
+                saveMove('place', { row, col });
+                switchTurn();
+                renderBoard();
+
+                // If playing against AI and it's AI's turn
+                if (playingAgainstAI && gameState.currentPlayer === 'black') {
+                    setTimeout(makeAIMove, 500);
+                }
+            } else if (!gameState.blackPlaced && isBlackTurn && row === 8 && !piece) {
+                // Place black piece
+                gameState.board[row + 1][col] = 'B';
+                gameState.blackPos = { row, col };
+                gameState.blackPlaced = true;
+                saveMove('place', { row, col });
+                switchTurn();
+                renderBoard();
+            }
+        } else {
+            const fromRow = gameState.selected.row;
+            const fromCol = gameState.selected.col;
+            if (row === fromRow && col === fromCol) {
+                // Deselect
+                gameState.selected = null;
+                renderBoard();
+            } else if (isValidMove(fromRow, fromCol, row, col)) {
+                // Move piece
+                movePiece(fromRow, fromCol, row, col);
+                saveMove('move', { fromRow, fromCol, toRow: row, toCol: col });
+                gameState.selected = null;
+                switchTurn();
+                renderBoard();
+                checkWin();
+
+                // If playing against AI and it's AI's turn
+                if (playingAgainstAI && gameState.currentPlayer === 'black' && !checkWin()) {
+                    setTimeout(makeAIMove, 500);
+                }
+            }
+        }
+    }
+
+    function isValidMove(fromRow, fromCol, toRow, toCol) {
+        // Check if destination is within board
+        if (toRow < -1 || toRow > 9 || toCol < 0 || toCol >= 9) return false;
+        // Check if destination is occupied
+        if (gameState.board[toRow+1][toCol]) return false;
+
+        const rowDiff = toRow - fromRow;
+        const colDiff = toCol - fromCol;
+        const absRowDiff = Math.abs(rowDiff);
+        const absColDiff = Math.abs(colDiff);
+        const isWhiteTurn = gameState.currentPlayer === 'white';
+        const opponentPiece = isWhiteTurn ? 'B' : 'W';
+
+        // Single-step move (one square)
+        if (absRowDiff + absColDiff === 1) {
+            return true;
+        }
+
+        // Jump move (two squares)
+        if (absRowDiff + absColDiff === 2 && (absRowDiff === 2 || absColDiff === 2)) {
+            const midRow = fromRow + rowDiff / 2;
+            const midCol = fromCol + colDiff / 2;
+
+            // Check if middle square has opponent's piece
+            if (gameState.board[midRow + 1][midCol] !== opponentPiece)
+                return false;
+            return true;
+        }
+        return false;
+    }
+
+    function movePiece(fromRow, fromCol, toRow, toCol) {
+        const piece = gameState.board[fromRow + 1][fromCol];
+        gameState.board[toRow + 1][toCol] = piece;
+        gameState.board[fromRow + 1][fromCol] = '';
+        if (piece === 'W') {
+            gameState.whitePos = { row: toRow, col: toCol };
+        } else {
+            gameState.blackPos = { row: toRow, col: toCol };
+        }
+    }
+
+    function handleWallDrop(e, row, col, type) {
+        e.preventDefault();
+        const wallsLeft = gameState.currentPlayer === 'white' ? gameState.whiteWalls : gameState.blackWalls;
+
+        // If AI's turn, do nothing
+        if (playingAgainstAI && gameState.currentPlayer === 'black') {
+            return;
+        }
+
+        if (wallsLeft <= 0) return alert('لا يوجد حوائط متبقية!');
+        if (gameState.walls.length >= MAX_WALLS) {
+            return alert('تم الوصول إلى الحد الأقصى للحوائط!');
+        }
+
+        // Check if wall is valid
+        if (!isValidWall(row, col, type)) {
+            return alert('لا يمكن وضع الحائط هنا!');
+        }
+
+        // Add wall
+        saveMove('wall', { row, col, type });
+        gameState.walls.push({ row, col, type });
+        if (gameState.currentPlayer === 'white') gameState.whiteWalls--;
+        else gameState.blackWalls--;
+
+        switchTurn();
+        renderBoard();
+
+        // If playing against AI and it's AI's turn
+        if (playingAgainstAI && gameState.currentPlayer === 'black') {
+            setTimeout(makeAIMove, 500);
+        }
+    }
+
+    function isValidWall(row, col, type) {
+        // Check if wall is within board boundaries
+        if (type === 'horizontal') {
+            if (row < -1 || row > 9 || col < 0 || col > 7) return false;
+        } else { // vertical
+            if (row < -1 || row > 8 || col < 0 || col > 8) return false;
+        }
+
+        // Check for existing wall at the same position
+        if (gameState.walls.some(wall => wall.row === row && wall.col === col && wall.type === type)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    function checkWin() {
+        if (gameState.whitePos?.row === 9) {
+            winMessage.textContent = 'اللاعب الأبيض فاز!';
+            winModal.style.display = 'flex';
+            return true;
+        } else if (gameState.blackPos?.row === -1) {
+            winMessage.textContent = 'اللاعب الأسود فاز!';
+            winModal.style.display = 'flex';
+            return true;
+        }
+        return false;
+    }
+
+    function winGameFromModal(confirm) {
+        winModal.style.display = 'none';
+        if (confirm) resetGame();
+    }
+
+    function switchTurn() {
+        gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+    }
+
+    function saveMove(type, data) {
+        const move = {
+            type,
+            data,
+            currentPlayer: gameState.currentPlayer,
+            whiteWalls: gameState.whiteWalls,
+            blackWalls: gameState.blackWalls,
+            whitePlaced: gameState.whitePlaced,
+            blackPlaced: gameState.blackPlaced,
+            selected: gameState.selected ? { ...gameState.selected } : null
+        };
+        gameState.moveHistory.push(move);
+        if (gameState.moveHistory.length > MAX_HISTORY_LENGTH) {
+            gameState.moveHistory.shift();
+        }
+    }
+
+    function undoMove() {
+        if (gameState.moveHistory.length === 0) return;
+        performUndo();
+    }
+
+    function performUndo() {
+        if (gameState.moveHistory.length === 0) return;
+
+        const lastMove = gameState.moveHistory.pop();
+        if (lastMove.type === 'place') {
+            const { row, col } = lastMove.data;
+            gameState.board[row + 1][col] = '';
+            if (lastMove.currentPlayer === 'white') {
+                gameState.whitePos = null;
+                gameState.whitePlaced = false;
+            } else {
+                gameState.blackPos = null;
+                gameState.blackPlaced = false;
+            }
+        } else if (lastMove.type === 'move') {
+            const { fromRow, fromCol, toRow, toCol } = lastMove.data;
+            const piece = gameState.board[toRow + 1][toCol];
+            gameState.board[toRow + 1][toCol] = '';
+            gameState.board[fromRow + 1][fromCol] = piece;
+            if (piece === 'W') {
+                gameState.whitePos = { row: fromRow, col: fromCol };
+            } else {
+                gameState.blackPos = { row: fromRow, col: fromCol };
+            }
+        } else if (lastMove.type === 'wall') {
+            gameState.walls.pop();
+            if (lastMove.currentPlayer === 'white') {
+                gameState.whiteWalls++;
+            } else {
+                gameState.blackWalls++;
+            }
+        }
+
+        gameState.currentPlayer = lastMove.currentPlayer;
+        gameState.whiteWalls = lastMove.whiteWalls;
+        gameState.blackWalls = lastMove.blackWalls;
+        gameState.whitePlaced = lastMove.whitePlaced;
+        gameState.blackPlaced = lastMove.blackPlaced;
+        gameState.selected = lastMove.selected ? { ...lastMove.selected } : null;
+
+        renderBoard();
+    }
+
+    function confirmResetGame() {
+        document.getElementById('resetModal').style.display = 'flex';
+    }
+
+    function resetGameFromModal(confirm) {
+        const modal = document.getElementById('resetModal');
+        modal.style.display = 'none';
+        if (confirm) {
+            resetGame();
+            playingAgainstAI = false;
+        }
+    }
+
+    function resetGame() {
+        gameState = JSON.parse(JSON.stringify(initialState));
+        renderBoard();
+    }
+
+    function updateIndicators() {
+        turnIndicator.textContent = `دور اللاعب ${gameState.currentPlayer === 'white' ? 'الأبيض' : 'الأسود'}`;
+        if (playingAgainstAI && gameState.currentPlayer === 'black') {
+            turnIndicator.textContent = 'دور الكمبيوتر';
+        }
+    }
+
+    // AI Functions
+    function makeAIMove() {
+        if (!playingAgainstAI || gameState.currentPlayer !== 'black') return;
+
+        // If black piece not placed yet, place it
+        if (!gameState.blackPlaced) {
+            placeAIPiece();
+            return;
+        }
+
+        // Decide whether to move or place a wall based on difficulty and strategy
+        let moveType = Math.random() > 0.5 ? 'move' : 'wall';
+
+        // Hard difficulty prioritizes winning and blocking
+        if (aiDifficulty === 'hard') {
+            // If close to winning, prioritize movement
+            if (gameState.blackPos.row < 2) {
+                moveType = 'move';
+            }
+            // If white is close to winning, consider placing a wall
+            else if (gameState.whitePos && gameState.whitePos.row > 7 && gameState.blackWalls > 0) {
+                moveType = 'wall';
+            }
+        }
+
+        if (moveType === 'move' || gameState.blackWalls === 0) {
+            moveAIPiece();
+        } else {
+            placeAIWall();
+        }
+    }
+
+    function placeAIPiece() {
+        // Place the black piece in a random position on the bottom row
+        const col = Math.floor(Math.random() * 9);
+        gameState.board[9][col] = 'B';
+        gameState.blackPos = { row: 8, col: col };
+        gameState.blackPlaced = true;
+        saveMove('place', { row: 8, col: col });
+        switchTurn();
+        renderBoard();
+        playSound(moveSound);
+    }
+
+    function moveAIPiece() {
+        const { row, col } = gameState.blackPos;
+        const possibleMoves = [];
+
+        // Check all possible moves
+        const directions = [
+            { row: -1, col: 0 }, // Up
+            { row: 1, col: 0 },  // Down
+            { row: 0, col: -1 }, // Left
+            { row: 0, col: 1 }   // Right
+        ];
+
+        // Add single-step moves
+        directions.forEach(dir => {
+            const toRow = row + dir.row;
+            const toCol = col + dir.col;
+            if (isValidMove(row, col, toRow, toCol)) {
+                possibleMoves.push({ fromRow: row, fromCol: col, toRow, toCol, score: scoreMove(toRow, toCol) });
+            }
+
+            // Add jump moves
+            const jumpRow = row + dir.row * 2;
+            const jumpCol = col + dir.col * 2;
+            if (isValidMove(row, col, jumpRow, jumpCol)) {
+                possibleMoves.push({ fromRow: row, fromCol: col, toRow: jumpRow, toCol: jumpCol, score: scoreMove(jumpRow, jumpCol) });
+            }
+        });
+
+        if (possibleMoves.length === 0) {
+            // No valid moves, try placing a wall instead
+            if (gameState.blackWalls > 0) {
+                placeAIWall();
+            }
+            return;
+        }
+
+        // Sort moves by score (higher is better)
+        possibleMoves.sort((a, b) => b.score - a.score);
+
+        // Choose move based on difficulty
+        let selectedMove;
+        if (aiDifficulty === 'easy') {
+            // Random move
+            selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        } else if (aiDifficulty === 'medium') {
+            // 70% chance of choosing one of the top 2 moves
+            if (possibleMoves.length > 1 && Math.random() < 0.7) {
+                selectedMove = possibleMoves[Math.floor(Math.random() * 2)];
+            } else {
+                selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            }
+        } else {
+            // Hard - choose the best move
+            selectedMove = possibleMoves[0];
+        }
+
+        // Execute the move
+        movePiece(selectedMove.fromRow, selectedMove.fromCol, selectedMove.toRow, selectedMove.toCol);
+        saveMove('move', {
+            fromRow: selectedMove.fromRow,
+            fromCol: selectedMove.fromCol,
+            toRow: selectedMove.toRow,
+            toCol: selectedMove.toCol
+        });
+        switchTurn();
+        renderBoard();
+        checkWin();
+    }
+
+    function scoreMove(toRow, toCol) {
+        let score = 0;
+
+        // Prioritize moving upward (toward goal)
+        score += (9 - toRow) * 10;
+
+        // Bonus for getting closer to the goal
+        if (toRow < gameState.blackPos.row) {
+            score += 5;
+        }
+
+        // Avoid edges if possible
+        if (toCol === 0 || toCol === 8) {
+            score -= 2;
+        }
+
+        // Consider distance to opponent
+        if (gameState.whitePos) {
+            const distToOpponent = Math.abs(toRow - gameState.whitePos.row) + Math.abs(toCol - gameState.whitePos.col);
+            // In hard mode, sometimes try to block opponent
+            if (aiDifficulty === 'hard' && distToOpponent < 3) {
+                score += 3;
+            }
+        }
+
+        return score;
+    }
+
+    function placeAIWall() {
+        if (gameState.blackWalls <= 0) {
+            moveAIPiece();
+            return;
+        }
+
+        const possibleWalls = [];
+
+        // Generate possible wall placements
+        for (let row = -1; row <= 9; row++) {
+            for (let col = 0; col < 8; col++) {
+                if (isValidWall(row, col, 'horizontal')) {
+                    possibleWalls.push({ row, col, type: 'horizontal', score: scoreWallPlacement(row, col, 'horizontal') });
+                }
+            }
+        }
+
+        for (let row = -1; row <= 8; row++) {
+            for (let col = 0; col < 9; col++) {
+                if (isValidWall(row, col, 'vertical')) {
+                    possibleWalls.push({ row, col, type: 'vertical', score: scoreWallPlacement(row, col, 'vertical') });
+                }
+            }
+        }
+
+        if (possibleWalls.length === 0) {
+            // No valid walls, move piece instead
+            moveAIPiece();
+            return;
+        }
+
+        // Sort walls by score (higher is better)
+        possibleWalls.sort((a, b) => b.score - a.score);
+
+        // Choose wall based on difficulty
+        let selectedWall;
+        if (aiDifficulty === 'easy') {
+            // Random wall
+            selectedWall = possibleWalls[Math.floor(Math.random() * possibleWalls.length)];
+        } else if (aiDifficulty === 'medium') {
+            // 70% chance of choosing one of the top 3 walls
+            if (possibleWalls.length > 2 && Math.random() < 0.7) {
+                selectedWall = possibleWalls[Math.floor(Math.random() * 3)];
+            } else {
+                selectedWall = possibleWalls[Math.floor(Math.random() * possibleWalls.length)];
+            }
+        } else {
+            // Hard - choose the best wall
+            selectedWall = possibleWalls[0];
+        }
+
+        // Place the wall
+        gameState.walls.push({ row: selectedWall.row, col: selectedWall.col, type: selectedWall.type });
+        gameState.blackWalls--;
+        saveMove('wall', { row: selectedWall.row, col: selectedWall.col, type: selectedWall.type });
+        switchTurn();
+        renderBoard();
+    }
+
+    function scoreWallPlacement(row, col, type) {
+        let score = 0;
+
+        // If white piece is placed
+        if (gameState.whitePos) {
+            const { row: whiteRow, col: whiteCol } = gameState.whitePos;
+
+            // Prioritize blocking white's path to goal
+            if (type === 'horizontal' && whiteRow >= 7 && row === whiteRow) {
+                // Wall would block white's direct path to goal
+                score += 20;
+
+                // Even better if it blocks white's current position
+                if (col === whiteCol || col === whiteCol - 1) {
+                    score += 10;
+                }
+            }
+
+            // Prioritize walls that are close to white piece
+            const distToWhite = Math.abs(row - whiteRow) + Math.abs(col - whiteCol);
+            if (distToWhite < 3) {
+                score += (3 - distToWhite) * 5;
+            }
+        }
+
+        // Avoid placing walls that might block own path
+        if (gameState.blackPos) {
+            const { row: blackRow, col: blackCol } = gameState.blackPos;
+
+            // Avoid walls that might block black's path to goal
+            if (type === 'horizontal' && blackRow <= 2 && row === blackRow - 1) {
+                score -= 15;
+            }
+
+            // Avoid walls too close to own piece
+            const distToBlack = Math.abs(row - blackRow) + Math.abs(col - blackCol);
+            if (distToBlack < 2) {
+                score -= 5;
+            }
+        }
+
+        // Add some randomness
+        score += Math.random() * 5;
+
+        return score;
+    }
+</script>
+</body>
+</html>
