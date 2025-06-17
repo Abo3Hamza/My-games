@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لعبة حجرة ورقة مقص</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #367543;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container {
+            background: #367543;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgb(253, 252, 252);
+            position: relative;
+        }
+
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 5rem;
+            z-index: 1000;
+            animation: celebrate 1s ease-out;
+        }
+
+        .computer-win {
+            background: rgba(244, 4, 24, 0.3);
+            animation: computer-celebrate 1s ease-out;
+        }
+
+        @keyframes celebrate {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.5); }
+            100% { opacity: 0; transform: scale(1); }
+        }
+
+        @keyframes computer-celebrate {
+            0% { transform: rotate(0deg) scale(0); }
+            25% { transform: rotate(30deg) scale(1.2); }
+            50% { transform: rotate(-30deg) scale(1.5); }
+            75% { transform: rotate(20deg) scale(1.2); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        .final-result {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #45d1b7;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgb(0, 0, 0);
+            text-align: center;
+            display: none;
+            z-index: 2000;
+            animation: final-popup 0.5s ease-out;
+        }
+
+        @keyframes final-popup {
+            from { transform: translate(-50%, -50%) scale(0); }
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        input[type="number"] {
+            padding: 2px;
+            width: 80px;
+            margin-left: 10px;
+        }
+
+        /* التعديلات الجديدة للدوائر */
+        .choices button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            padding: 0;
+            border: 3px solid #fff;
+            background: #45d1b7;
+            cursor: pointer;
+        }
+
+        .choices button span {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="victory-overlay" id="victoryOverlay"></div>
+    <div class="final-result" id="finalResult"></div>
+
+    <h1>لعبة حجرة ورقة مقص 🪨 📄 ✂️</h1>
+
+    <div class="input-section">
+        <div class="input-group">
+            <input type="text" id="nameInput" placeholder="أدخل اسمك">
+            <input type="number" id="roundsInput" placeholder="عدد الجولات" min="1">
+        </div>
+        <button onclick="startGame()">ابدأ اللعبة</button>
+    </div>
+
+    <div class="choices" id="gameButtons" style="display: none;">
+        <button onclick="playGame(1)">🪨<span> حجرة</span></button>
+        <button onclick="playGame(2)">📄<span> ورقة</span></button>
+        <button onclick="playGame(3)">✂️<span> مقص</span></button>
+    </div>
+
+    <div class="result" id="result"></div>
+    <div class="scores" id="scores"></div>
+    <button onclick="resetGame()" style="background-color: #3c6ce7;">إعادة التشغيل</button>
+</div>
+
+<script>
+    let playerName = "";
+    let num_n = 0, num_c = 0, num = 0;
+    let totalRounds = 0;
+    let currentRound = 0;
+
+    function triggerVictory(winner) {
+        const overlay = document.getElementById('victoryOverlay');
+        overlay.innerHTML = winner === 'player' ? '🎉' : '🤖';
+        overlay.className = `victory-overlay ${winner === 'computer' ? 'computer-win' : ''}`;
+        overlay.style.display = 'flex';
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 1000);
+    }
+
+    function showFinalResult() {
+        const finalResult = document.getElementById('finalResult');
+        let resultText = '';
+
+        if(num_n > num_c) {
+            resultText = `🏆 ${playerName} فاز باللعبة!`;
+        } else if(num_c > num_n) {
+            resultText = "🤖 الكمبيوتر فاز باللعبة!";
+        } else {
+            resultText = "🤝 التعادل!";
+        }
+
+        finalResult.innerHTML = `
+                <h2>${resultText}</h2>
+                <p>النتائج النهائية:</p>
+                <p>${playerName}: ${num_n} فوز</p>
+                <p>الكمبيوتر: ${num_c} فوز</p>
+                <p>التعادلات: ${num}</p>
+                <button onclick="resetGame()">العب مجددًا</button>
+            `;
+        finalResult.style.display = 'block';
+    }
+
+    function startGame() {
+        playerName = document.getElementById("nameInput").value;
+        totalRounds = parseInt(document.getElementById("roundsInput").value);
+
+        if(!playerName.trim() || !totalRounds || totalRounds < 1) {
+            alert("الرجاء إدخال البيانات بشكل صحيح!");
+            return;
+        }
+
+        document.getElementById("gameButtons").style.display = "flex";
+        document.getElementById("nameInput").disabled = true;
+        document.getElementById("roundsInput").disabled = true;
+        updateScores();
+    }
+
+    function playGame(userChoice) {
+        if(currentRound >= totalRounds) return;
+
+        currentRound++;
+        const choices = {1: "🪨 حجرة", 2: "📄 ورقة", 3: "✂️ مقص"};
+        const computerChoice = Math.floor(Math.random() * 3) + 1;
+
+        let resultText = "";
+        if ((userChoice === computerChoice+1) || (userChoice === 1 && computerChoice === 3)) {
+            resultText = `<span class="emoji">🎉</span> الفائز: ${playerName}`;
+            num_n++;
+            triggerVictory('player');
+        } else if ((userChoice+1 ===  computerChoice) || (userChoice === 3 && computerChoice === 1)) {
+            resultText = `<span class="emoji">🤖</span> الفائز: الكمبيوتر`;
+            num_c++;
+            triggerVictory('computer');
+        } else {
+            resultText = `<span class="emoji">🤝</span> تعادل`;
+            num++;
+        }
+
+        document.getElementById("result").innerHTML = `
+                ${resultText}<br>
+                ${playerName}: ${choices[userChoice]}<br>
+                الكمبيوتر: ${choices[computerChoice]}
+            `;
+
+        updateScores();
+
+        if(currentRound === totalRounds) {
+            setTimeout(showFinalResult, 1000);
+        }
+    }
+
+    function updateScores() {
+        document.getElementById("scores").innerHTML = `
+                <h3>النتائج (الجولة ${currentRound}/${totalRounds}):</h3>
+                ${playerName}: ${num_n} فوز<br>
+                الكمبيوتر: ${num_c} فوز<br>
+                التعادلات: ${num}
+            `;
+    }
+
+    function resetGame() {
+        num_n = num_c = num = 0;
+        currentRound = 0;
+        document.getElementById("nameInput").disabled = false;
+        document.getElementById("roundsInput").disabled = false;
+        document.getElementById("gameButtons").style.display = "none";
+        document.getElementById("result").innerHTML = "";
+        document.getElementById("finalResult").style.display = "none";
+        updateScores();
+    }
+</script>
+</body>
+</html>

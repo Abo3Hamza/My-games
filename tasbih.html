@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سبحة إلكترونية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        html, body {
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            direction: rtl;
+        }
+        .container {
+            max-width: 100%;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.8em;
+            color: #f39c12;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .add-dhikr {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        input {
+            flex: 1 1 200px;
+            background: #2c3e50;
+            color: #fff;
+        }
+        input::placeholder {
+            color: #ccc;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+        .dhikr-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .dhikr-item {
+            background-color: #2c3e50;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        .dhikr-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .dhikr-name {
+            font-size: 1.1em;
+            font-weight: 500;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: flex-end;
+        }
+        .delete-btn, .edit-btn {
+            background-color: #e74c3c;
+            padding: 8px 19px;
+            font-size: 0.9em;
+        }
+        .counter-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+        }
+        #currentDhikrName {
+            font-size: 2em;
+            text-align: center;
+            margin-top: 1px;
+            margin-bottom: 30px;
+            color: #f39c12;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 0 10px;
+            border-bottom: 2px solid #f39c12;
+            width: 100%;
+        }
+        .counter-display {
+            font-size: 4em;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            color: #faf8f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.6);
+            transition: all 0.2s ease;
+        }
+        .counter-display:active {
+            transform: scale(0.95);
+        }
+        .counter-display .count {
+            font-size: 1em;
+            line-height: 1.2;
+            text-align: center;
+        }
+        .counter-footer {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 15px;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: inherit;
+            gap: 10px;
+        }
+        .nav-btn, .reset-btn, .back-btn {
+            flex: 1 1 45%;
+            padding: 4px;
+            font-size: 1.1em;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-btn {
+            background-color: #2ecc71;
+            color: #000;
+        }
+        .nav-btn:hover {
+            background-color: #27ae60;
+        }
+        .reset-btn {
+            background-color: #f1c40f;
+            color: #000;
+        }
+        .reset-btn:hover {
+            background-color: #f39c12;
+        }
+        .back-btn {
+            background-color: #3498db;
+        }
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Buttons in header */
+        .sound-btn, .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            background-color: #95a5a6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .sound-btn {
+            left: 15px;
+        }
+
+        .fullscreen-btn {
+            right: 15px;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+        }
+
+        .flash {
+            animation: pulse 0.5s;
+        }
+
+        @media (min-width: 600px) {
+            .counter-display {
+                width: 300px;
+                height: 300px;
+                font-size: 5em;
+            }
+            #currentDhikrName {
+                font-size: 2.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .counter-display {
+                width: 250px;
+                height: 250px;
+                font-size: 3.5em;
+            }
+            #currentDhikrName {
+                font-size: 1.8em;
+                margin-top: 30px;
+                margin-bottom: 20px;
+            }
+            .nav-buttons .nav-btn,
+            .nav-buttons .reset-btn,
+            .nav-buttons .back-btn {
+                flex: 1 1 100%;
+            }
+        }
+
+        @media (orientation: landscape) {
+            #currentDhikrName {
+                font-size: 2.5em;
+                margin-top: 30px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container main-page">
+    <h1>سبحة إلكترونية 📿</h1>
+    <div class="add-dhikr">
+        <input type="text" id="dhikrName" placeholder="أدخل الذكر">
+        <input type="number" id="dhikrCount" placeholder="عدد المرات" min="1" value="1">
+        <button onclick="addDhikr()">إضافة ذكر</button>
+    </div>
+    <div class="dhikr-list" id="dhikrList"></div>
+
+    <!-- Sound and Fullscreen buttons at the top -->
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+    <button class="fullscreen-btn" onclick="toggleFullScreen()">⛶</button>
+</div>
+
+<div class="counter-page" id="counterPage">
+    <div style="margin: 0; line-height: 1;">
+        <div style="display: block; margin: 0;">عـــــطـــــر فـــــمـــك بـــــذكـــــــر الـــلـــــه</div>
+        <h1 id="currentDhikrName" style="display: block; margin: 0;"></h1>
+    </div>
+    <div class="counter-display" onclick="handleCounterClick()">
+        <div class="count">
+            <div id="currentCount" style="display: inline;">0</div>
+            <div style="display: inline;">/</div>
+            <div id="targetCount" style="display: inline;">0</div>
+        </div>
+    </div>
+    <div class="counter-footer">
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="navigateDhikr(-1)">←</button>
+            <button class="reset-btn" onclick="resetCounter()">تصفير</button>
+            <button class="back-btn" onclick="showMainPage()">الرجوع</button>
+            <button class="nav-btn" onclick="navigateDhikr(1)">→</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dhikrList = JSON.parse(localStorage.getItem('dhikr')) || [];
+    let currentDhikr = null;
+    let currentIndex = 0;
+    let isSoundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+    let audioContext = null;
+
+    document.addEventListener('copy', (e) => {
+        e.preventDefault();
+        alert('النسخ غير مسموح به في هذه الصفحة');
+    });
+
+    function navigateDhikr(direction) {
+        currentIndex += direction;
+        if (currentIndex < 0) {
+            currentIndex = dhikrList.length - 1;
+        } else if (currentIndex >= dhikrList.length) {
+            currentIndex = 0;
+        }
+        currentDhikr = dhikrList[currentIndex];
+        updateCounterDisplay();
+        document.getElementById('currentDhikrName').textContent = currentDhikr.name;
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('dhikr', JSON.stringify(dhikrList));
+        localStorage.setItem('soundEnabled', isSoundEnabled);
+    }
+
+    function playBeep() {
+        if (!isSoundEnabled) return;
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    function toggleSound() {
+        isSoundEnabled = !isSoundEnabled;
+        document.querySelector('.sound-btn').textContent = isSoundEnabled ? '🔊' : '🔇';
+        saveToLocalStorage();
+    }
+
+    function addDhikr() {
+        const nameInput = document.getElementById('dhikrName');
+        const countInput = document.getElementById('dhikrCount');
+        const newDhikr = {
+            id: Date.now(),
+            name: nameInput.value.trim(),
+            target: parseInt(countInput.value),
+            current: 0
+        };
+
+        if (newDhikr.name === '') {
+            alert('يرجى إدخال الذكر');
+            return;
+        }
+
+        dhikrList.push(newDhikr);
+        renderDhikrList();
+        saveToLocalStorage();
+        nameInput.value = '';
+        countInput.value = 1;
+    }
+
+    function editDhikr(id) {
+        const item = dhikrList.find(d => d.id === id);
+        if (!item) return;
+
+        const newName = prompt("تعديل الذكر:", item.name);
+        if (newName && newName.trim()) {
+            item.name = newName.trim();
+            saveToLocalStorage();
+            renderDhikrList();
+        }
+    }
+
+    function showCounterPage(id) {
+        currentIndex = dhikrList.findIndex(item => item.id === id);
+        currentDhikr = dhikrList[currentIndex];
+        document.querySelector('.main-page').style.display = 'none';
+        document.querySelector('.counter-page').style.display = 'flex';
+        document.getElementById('currentDhikrName').textContent = currentDhikr.name;
+        updateCounterDisplay();
+        document.querySelector('.sound-btn').textContent = isSoundEnabled ? '🔊' : '🔇';
+    }
+
+    function handleCounterClick() {
+        incrementCounter();
+        document.querySelector('.counter-display').classList.add('flash');
+        setTimeout(() => {
+            document.querySelector('.counter-display').classList.remove('flash');
+        }, 500);
+    }
+
+    function incrementCounter() {
+        if (currentDhikr) {
+            currentDhikr.current++;
+            if (currentDhikr.current > currentDhikr.target) {
+                currentDhikr.current = 0;
+            }
+            playBeep();
+            updateCounterDisplay();
+            saveToLocalStorage();
+        }
+    }
+
+    function resetCounter() {
+        if (currentDhikr) {
+            currentDhikr.current = 0;
+            updateCounterDisplay();
+            saveToLocalStorage();
+        }
+    }
+
+    function updateCounterDisplay() {
+        document.getElementById('currentCount').textContent = currentDhikr.current;
+        document.getElementById('targetCount').textContent = currentDhikr.target;
+    }
+
+    function deleteDhikr(id) {
+        dhikrList = dhikrList.filter(item => item.id !== id);
+        saveToLocalStorage();
+        renderDhikrList();
+    }
+
+    function showMainPage() {
+        document.querySelector('.main-page').style.display = 'block';
+        document.querySelector('.counter-page').style.display = 'none';
+        renderDhikrList();
+    }
+
+    function renderDhikrList() {
+        const listContainer = document.getElementById('dhikrList');
+        listContainer.innerHTML = '';
+        dhikrList.forEach(dhikr => {
+            const dhikrElement = document.createElement('div');
+            dhikrElement.className = 'dhikr-item';
+            dhikrElement.innerHTML = `
+                    <div class="dhikr-name" onclick="showCounterPage(${dhikr.id})">${dhikr.name} (${dhikr.target} مرة)</div>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="event.stopPropagation(); editDhikr(${dhikr.id})">تعديل</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDhikr(${dhikr.id})">حذف</button>
+                    </div>
+                `;
+            listContainer.appendChild(dhikrElement);
+        });
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    window.onload = () => {
+        renderDhikrList();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+        // Restore sound state on load
+        document.querySelector('.sound-btn').textContent = isSoundEnabled ? '🔊' : '🔇';
+    };
+
+    document.addEventListener('fullscreenchange', () => {
+        document.body.classList.toggle('fullscreen', !!document.fullscreenElement);
+    });
+</script>
+</body>
+</html>
