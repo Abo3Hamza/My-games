@@ -4,11 +4,6 @@ const games = [
     image: "test.jpg",
     html: "test.html"
   },
-  {
-    name: "سبحه الكترونيه",
-    image: "tasbih.jpg",
-    html: "tasbih.html"
-  },
 {
     name: "chess",
     image: "chess.jpg",
